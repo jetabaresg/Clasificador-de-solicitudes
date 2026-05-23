@@ -17,7 +17,9 @@ from sklearn.metrics import classification_report, accuracy_score, confusion_mat
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = BASE_DIR.parent
 
-archivo = PROJECT_DIR / "data" / "dataset_bitext_final_limpio.csv"
+archivo_merged = PROJECT_DIR / "data" / "dataset_with_synthetic.csv"
+archivo_limpio = PROJECT_DIR / "data" / "dataset_bitext_final_limpio.csv"
+archivo = archivo_merged if archivo_merged.exists() else archivo_limpio
 df = pd.read_csv(archivo)
 
 print("Columnas del dataset:")

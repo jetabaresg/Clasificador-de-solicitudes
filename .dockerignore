@@ -1,0 +1,9 @@
+.venv/
+Sistema_clasificador.venv/
+__pycache__/
+*.pyc
+.git/
+venv/
+env/
+*.zip
+*.tar.gz

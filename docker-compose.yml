@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  clasificador:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./:/app:delegated
+    command: ["streamlit", "run", "Sistema_clasificador/app_streamlit.py", "--server.port", "8501", "--server.address", "0.0.0.0"]

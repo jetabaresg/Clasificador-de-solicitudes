@@ -17,7 +17,10 @@ st.set_page_config(
 BASE_DIR = Path(__file__).resolve().parent
 
 MODELO_PATH = BASE_DIR / "models" / "modelo_svm.pkl"
-DATASET_PATH = BASE_DIR / "data" / "dataset_bitext_final_limpio.csv"
+FALLBACK_DATASET = BASE_DIR / "data" / "dataset_bitext_final_limpio.csv"
+DATASET_PATH = BASE_DIR / "data" / "dataset_with_synthetic.csv"
+if not DATASET_PATH.exists():
+    DATASET_PATH = FALLBACK_DATASET
 TABLA_PATH = BASE_DIR / "data" / "tabla_intenciones.csv"
 
 UMBRAL_ALTO = 0.60
@@ -34,7 +37,7 @@ def cargar_modelo():
 
 
 @st.cache_data
-def cargar_datos():
+def cargar_datos(dataset_signature, tabla_signature):
     df = pd.read_csv(DATASET_PATH)
     tabla = pd.read_csv(TABLA_PATH)
 
@@ -50,7 +53,9 @@ def cargar_datos():
 
 
 modelo = cargar_modelo()
-df, tabla_intenciones, intent_a_categoria, info_intenciones = cargar_datos()
+dataset_signature = DATASET_PATH.stat().st_mtime if DATASET_PATH.exists() else 0
+tabla_signature = TABLA_PATH.stat().st_mtime if TABLA_PATH.exists() else 0
+df, tabla_intenciones, intent_a_categoria, info_intenciones = cargar_datos(dataset_signature, tabla_signature)
 
 
 # ==============================
@@ -145,7 +150,7 @@ st.write(
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    st.metric("Intenciones", df["intent"].nunique())
+    st.metric("Intenciones", len(tabla_intenciones))
 
 with col2:
     st.metric("Registros", f"{len(df):,}")
@@ -277,9 +282,9 @@ st.divider()
 with st.expander("Información técnica del modelo"):
     st.write("**Técnica utilizada:** NLP + TF-IDF + SVM calibrado")
     st.write("**Archivo del modelo:** modelo_svm.pkl")
-    st.write("**Dataset:** dataset_bitext_final_limpio.csv")
+    st.write("**Dataset:**", DATASET_PATH.name)
     st.write("**Tabla de apoyo:** tabla_intenciones.csv")
     st.write("**Total de registros:**", len(df))
-    st.write("**Total de intenciones:**", df["intent"].nunique())
+    st.write("**Total de intenciones:**", len(tabla_intenciones))
     st.write("**Umbral alto:**", UMBRAL_ALTO)
     st.write("**Umbral bajo:**", UMBRAL_BAJO)
