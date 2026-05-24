@@ -36,7 +36,6 @@ def merge():
     df_comb = df_comb[cols]
 
     df_comb.to_csv(OUT, index=False, encoding='utf-8')
-    print('Merged dataset saved to', OUT)
 
 
 if __name__ == '__main__':

@@ -1,79 +1,62 @@
 # Clasificador de solicitudes
 
-Sistema para clasificar mensajes de soporte al cliente por intención, mostrar confianza de predicción y orientar el enrutamiento operativo. La app web está implementada con Streamlit y consume un modelo SVM calibrado entrenado sobre el dataset limpio y su extensión sintética.
+Sistema para clasificar mensajes de soporte al cliente por intención y facilitar el enrutamiento operativo.
 
-## Arquitectura
+Componentes clave
 
-- `Sistema_clasificador/app_streamlit.py`: interfaz web, carga del modelo y presentación del resultado.
-- `Sistema_clasificador/models/modelo_svm.py`: entrenamiento del modelo principal con TF-IDF + SVM calibrado.
-- `herramientas/generar_ejemplos_intencion.py`: crea ejemplos canónicos y sintéticos por intención.
-- `herramientas/fusionar_sinteticos.py`: fusiona el dataset original con los sintéticos.
-- `herramientas/entrenamiento_base.py`: baseline alternativo con embeddings + clasificador multilabel.
-- `herramientas/prediccion_ejemplo.py`: ejemplo simple de inferencia sobre textos nuevos.
-- `Sistema_clasificador/data/tabla_intenciones.csv`: catálogo maestro de intenciones, categorías y reglas de actuación.
+- Aplicación web: `Sistema_clasificador/app_streamlit.py` (interfaz y carga del modelo).
+- Modelo: `Sistema_clasificador/models/modelo_svm.pkl` (modelo SVM calibrado usado en producción).
+- Datos: `Sistema_clasificador/data/` (datasets y tabla `tabla_intenciones.csv`).
+- Dependencias: `Sistema_clasificador/requirements.txt`.
+- Contenerización: `Dockerfile` y `docker-compose.yml`.
 
-## Cómo funcionan los modelos de IA
+Ejecutar localmente (sin Docker)
 
-### Modelo principal de producción
-
-El modelo principal está pensado para clasificar un mensaje corto de soporte en una intención concreta. Su funcionamiento es este:
-
-1. El texto entra a la app y se normaliza con limpieza básica: minúsculas, sin URLs, sin correos y con signos de puntuación reducidos.
-2. El entrenamiento transforma el texto en características numéricas usando TF-IDF de palabras y de caracteres.
-3. Esas características pasan a un SVM lineal calibrado, que no solo decide la intención sino que también produce una probabilidad o confianza aproximada.
-4. La app muestra la intención principal, la categoría asociada, la prioridad y una recomendación operativa.
-5. También muestra las 3 intenciones más cercanas para apoyar la revisión humana cuando el caso es ambiguo.
-
-El motivo de usar SVM calibrado es que funciona muy bien para clasificación de texto con etiquetas claras y permite obtener una confianza útil para decidir cuándo escalar a revisión manual.
-
-### Modelo baseline de referencia
-
-Además del modelo principal, el repo tiene un baseline de comparación:
-
-1. Toma el texto.
-2. Lo convierte en embeddings semánticos con `sentence-transformers`.
-3. Entrena un clasificador `OneVsRestClassifier` con `LogisticRegression`.
-4. Guarda artefactos reutilizables para pruebas rápidas o evaluación comparativa.
-
-Este baseline sirve para contrastar resultados, no como motor principal de la app.
-
-## Flujo del sistema
-
-1. Se redacta o corrige la taxonomía en `tabla_intenciones.csv`.
-2. Se generan ejemplos enriquecidos y sintéticos para las intenciones nuevas o ambiguas.
-3. Se fusionan los datos con el dataset limpio para ampliar cobertura.
-4. Se entrena o reentrena el modelo SVM.
-5. La app Streamlit carga el modelo y la tabla de intenciones para mostrar intención, categoría, prioridad y recomendación.
-
-## Funciones principales
-
-- Clasificación de intención con confianza estimada.
-- Visualización de las 3 intenciones más cercanas.
-- Recomendación operativa por intención.
-- Conteo visible de intenciones y registros usados por la aplicación.
-
-## Ejecutar con Docker
-
-Construir la imagen:
-
-```bash
-docker build -t clasificador-de-solicitudes .
+```powershell
+python -m pip install -r .\Sistema_clasificador\requirements.txt
+python -m streamlit run .\Sistema_clasificador\app_streamlit.py
 ```
 
-Ejecutar con Docker:
-
-```bash
-docker run -p 8501:8501 clasificador-de-solicitudes
-```
-
-O con Docker Compose:
+Ejecutar con Docker
 
 ```bash
 docker compose up --build
 ```
 
-La app queda disponible en `http://localhost:8501`.
+La app estará disponible en `http://localhost:8501`.
 
-## Documento relacionado
+Más información técnica: [SISTEMA_Y_ETIQUETADO.md](SISTEMA_Y_ETIQUETADO.md)
 
-- [SISTEMA_Y_ETIQUETADO.md](SISTEMA_Y_ETIQUETADO.md): explicación de funcionamiento, jerarquía de intenciones y criterio de etiquetado.
+---
+
+Información general
+
+Este repositorio contiene una aplicación web (Streamlit) que usa un modelo de aprendizaje automático para detectar la intención en mensajes de soporte al cliente. Está pensada para integrarse en flujos operativos donde la intención determina la categoría, prioridad y la recomendación de acción.
+
+Requisitos mínimos
+
+- Python 3.9+ o Docker instalado.
+- Paquetes listados en `Sistema_clasificador/requirements.txt`.
+
+Uso rápido
+
+- Ejecutar localmente (sin Docker):
+
+```powershell
+python -m pip install -r .\Sistema_clasificador\requirements.txt
+python -m streamlit run .\Sistema_clasificador\app_streamlit.py
+```
+
+- Ejecutar con Docker (recomendado para entornos consistentes):
+
+```bash
+docker compose up --build
+```
+
+Estructura principal
+
+- `Sistema_clasificador/` : código de la app, modelos y datos.
+- `herramientas/` : scripts utilitarios para generación y entrenamiento.
+- `Dockerfile`, `docker-compose.yml` : configuración para contenerización.
+
+Si necesitas que el README incluya más detalles (p. ej. ejemplos de API, endpoints o instrucciones de despliegue), dime qué prefieres y lo añado.

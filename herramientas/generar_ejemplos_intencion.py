@@ -121,10 +121,5 @@ def enrich():
                 text = tpl.format(action=action, obj=obj)
                 writer.writerow({'intent': intent_id, 'text': text})
 
-    print('Enriquecimiento completado:')
-    print('-', OUT_ENRICHED)
-    print('-', OUT_SYNTHETIC)
-
-
 if __name__ == '__main__':
     enrich()

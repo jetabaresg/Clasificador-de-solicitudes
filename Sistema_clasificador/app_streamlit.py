@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import joblib
 import re
+from datetime import datetime
 from pathlib import Path
 
 # ==============================
@@ -10,8 +11,217 @@ from pathlib import Path
 
 st.set_page_config(
     page_title="Clasificador de solicitudes",
-    page_icon="🤖",
+    page_icon="◼",
     layout="wide"
+)
+
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+    :root {
+        --bg: #050608;
+        --surface: rgba(18, 20, 24, 0.94);
+        --surface-strong: rgba(24, 26, 32, 0.98);
+        --line: rgba(255, 255, 255, 0.09);
+        --line-strong: rgba(255, 255, 255, 0.16);
+        --text: #f4f6f8;
+        --muted: #a6adb7;
+        --accent: #e8e4dc;
+        --accent-2: #8f94ff;
+        --accent-glow: rgba(143, 148, 255, 0.18);
+    }
+
+    .stApp {
+        background:
+            radial-gradient(circle at top left, rgba(143, 148, 255, 0.14), transparent 30%),
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.07), transparent 26%),
+            linear-gradient(180deg, #050608 0%, #090b0f 48%, #050608 100%);
+        color: var(--text);
+        font-family: 'Inter', sans-serif;
+    }
+
+    .main .block-container {
+        max-width: 1180px;
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Space Grotesk', sans-serif;
+        letter-spacing: -0.04em;
+        color: var(--text);
+    }
+
+    p, li, label, span, div {
+        color: var(--text);
+    }
+
+    .hero {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, rgba(24, 26, 32, 0.98), rgba(13, 15, 18, 0.92));
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        padding: 2rem 2rem 1.8rem;
+        margin: 0 0 1.5rem 0;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+    }
+
+    .hero::before {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        background: radial-gradient(circle at top right, rgba(143, 148, 255, 0.18), transparent 30%);
+        pointer-events: none;
+    }
+
+    .hero-eyebrow {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        font-size: 0.76rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.9rem;
+    }
+
+    .hero-eyebrow::before {
+        content: '';
+        width: 42px;
+        height: 1px;
+        background: linear-gradient(90deg, var(--accent-2), transparent);
+    }
+
+    .hero h1 {
+        position: relative;
+        margin: 0;
+        font-size: clamp(2.1rem, 3.8vw, 3.8rem);
+        line-height: 0.95;
+    }
+
+    .hero p {
+        position: relative;
+        max-width: 760px;
+        margin: 0.95rem 0 0;
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+    [data-testid="stMetric"] {
+        background: linear-gradient(180deg, rgba(24, 26, 32, 0.96), rgba(14, 16, 20, 0.96));
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 1rem 1.1rem;
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.2);
+    }
+
+    [data-testid="stMetricLabel"] {
+        color: var(--muted);
+    }
+
+    [data-testid="stMetricValue"] {
+        color: var(--text);
+        font-family: 'Space Grotesk', sans-serif;
+        letter-spacing: -0.04em;
+    }
+
+    [data-testid="stButton"] button {
+        background: linear-gradient(135deg, #e8e4dc 0%, #b9beca 100%);
+        color: #08090b;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        font-weight: 700;
+        padding: 0.78rem 1rem;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+        transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+    }
+
+    [data-testid="stButton"] button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.34);
+        filter: brightness(1.04);
+    }
+
+    [data-testid="stTextInput"] input {
+        background: rgba(11, 12, 15, 0.96) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--line) !important;
+        border-radius: 16px !important;
+        padding: 0.95rem 1rem !important;
+        font-size: 15px !important;
+        line-height: 1.5 !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    [data-testid="stTextInput"] input:focus {
+        border-color: rgba(143, 148, 255, 0.55) !important;
+        box-shadow: 0 0 0 3px var(--accent-glow) !important;
+    }
+
+    [data-testid="stContainer"] {
+        color: var(--text);
+    }
+
+    [data-testid="stExpander"] {
+        background: rgba(18, 20, 24, 0.82);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+    }
+
+    [data-testid="stExpander"] summary {
+        color: var(--text);
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 600;
+    }
+
+    [data-testid="stInfo"], [data-testid="stWarning"], [data-testid="stError"], [data-testid="stSuccess"] {
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        backdrop-filter: blur(10px);
+    }
+
+    [data-testid="stInfo"] { background: rgba(37, 44, 62, 0.66); }
+    [data-testid="stWarning"] { background: rgba(72, 54, 18, 0.55); }
+    [data-testid="stError"] { background: rgba(79, 24, 28, 0.58); }
+    [data-testid="stSuccess"] { background: rgba(20, 58, 41, 0.58); }
+
+    [data-testid="stCodeBlock"] {
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        overflow: hidden;
+    }
+
+    pre, code {
+        background: rgba(255, 255, 255, 0.03) !important;
+        color: #eef1f6 !important;
+    }
+
+    hr {
+        border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .stProgress > div > div {
+        background: linear-gradient(90deg, #e8e4dc, #8f94ff) !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
+    <div class="hero">
+        <div class="hero-eyebrow">Clasificador de solicitudes</div>
+        <h1>Clasificador de solicitudes</h1>
+        <p>Clasifica solicitudes con una respuesta clara, limpia y confiable en segundos.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -38,8 +248,8 @@ def cargar_modelo():
 
 @st.cache_data
 def cargar_datos(dataset_signature, tabla_signature):
-    df = pd.read_csv(DATASET_PATH)
-    tabla = pd.read_csv(TABLA_PATH)
+    df = pd.read_csv(DATASET_PATH, encoding="utf-8-sig")
+    tabla = pd.read_csv(TABLA_PATH, encoding="utf-8-sig")
 
     intent_a_categoria = (
         df.groupby("intent")["category"]
@@ -137,11 +347,130 @@ def mostrar_top3(top_3):
             st.progress(confianza)
 
 
+def construir_resultado(solicitud, texto_limpio, intent, categoria_tecnica, info, confianza, top_3):
+    estado, descripcion_estado, tipo_estado = estado_confianza(confianza)
+
+    if tipo_estado == "success":
+        prioridad_mostrada = info["prioridad"]
+        area_mostrada = info["area_responsable"]
+        recomendacion_mostrada = info["recomendacion"]
+    elif tipo_estado == "warning":
+        prioridad_mostrada = "Revisión manual"
+        area_mostrada = info["area_responsable"]
+        recomendacion_mostrada = (
+            "La solicitud tiene similitud con una intención entrenada, pero la confianza no es suficientemente alta. "
+            "Se recomienda validar manualmente antes de enrutar el caso."
+        )
+    else:
+        prioridad_mostrada = "Revisión manual"
+        area_mostrada = "Servicio al cliente"
+        recomendacion_mostrada = (
+            "La solicitud no coincide claramente con las intenciones entrenadas. Se recomienda revisión manual o ampliar "
+            "el dataset con ejemplos similares."
+        )
+
+    return {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "solicitud": solicitud,
+        "texto_limpio": texto_limpio,
+        "intent": intent,
+        "categoria_tecnica": categoria_tecnica,
+        "info": info,
+        "confianza": confianza,
+        "estado": estado,
+        "descripcion_estado": descripcion_estado,
+        "tipo_estado": tipo_estado,
+        "prioridad_mostrada": prioridad_mostrada,
+        "area_mostrada": area_mostrada,
+        "recomendacion_mostrada": recomendacion_mostrada,
+        "top_3": top_3,
+    }
+
+
+def guardar_resultado(resultado):
+    st.session_state.setdefault("historial_respuestas", [])
+    st.session_state["ultima_respuesta"] = resultado
+    historial = st.session_state["historial_respuestas"]
+    historial.insert(0, resultado)
+    st.session_state["historial_respuestas"] = historial[:10]
+
+
+def mostrar_resultado(resultado):
+    porcentaje = resultado["confianza"] * 100
+
+    st.divider()
+    st.subheader("Resultado")
+
+    if resultado["tipo_estado"] == "success":
+        st.success(f"{resultado['estado']} - {resultado['descripcion_estado']}")
+    elif resultado["tipo_estado"] == "warning":
+        st.warning(f"{resultado['estado']} - {resultado['descripcion_estado']}")
+    else:
+        st.error(f"{resultado['estado']} - {resultado['descripcion_estado']}")
+
+    with st.container(border=True):
+
+        with st.container(border=True):
+            st.caption("ESTADO DE CLASIFICACIÓN")
+            st.write(f"**{resultado['descripcion_estado']}**")
+
+        col_titulo, col_confianza = st.columns([3, 1])
+
+        with col_titulo:
+            st.markdown(f"## {resultado['info']['nombre']}")
+            st.code(resultado["intent"], language=None)
+
+        with col_confianza:
+            st.metric("Confianza", f"{porcentaje:.1f}%")
+
+        st.progress(resultado["confianza"])
+
+        col_a, col_b = st.columns(2)
+
+        with col_a:
+            with st.container(border=True):
+                st.caption("CATEGORÍA TÉCNICA")
+                st.write(f"**{resultado['categoria_tecnica']}**")
+
+        with col_b:
+            with st.container(border=True):
+                st.caption("CATEGORÍA GENERAL")
+                st.write(f"**{resultado['info']['categoria_amigable']}**")
+
+        col_c, col_d = st.columns(2)
+
+        with col_c:
+            with st.container(border=True):
+                st.caption("PRIORIDAD")
+                st.write(f"**{resultado['prioridad_mostrada']}**")
+
+        with col_d:
+            with st.container(border=True):
+                st.caption("ÁREA RESPONSABLE")
+                st.write(f"**{resultado['area_mostrada']}**")
+
+        with st.container(border=True):
+            st.caption("TEXTO PROCESADO")
+            st.write(f"`{resultado['texto_limpio']}`")
+
+        st.markdown("#### Recomendación")
+        st.info(resultado["recomendacion_mostrada"])
+
+    st.divider()
+    mostrar_top3(resultado["top_3"])
+
+
+if "historial_respuestas" not in st.session_state:
+    st.session_state["historial_respuestas"] = []
+
+if "ultima_respuesta" not in st.session_state:
+    st.session_state["ultima_respuesta"] = None
+
+
 # ==============================
 # Encabezado
 # ==============================
 
-st.title("🤖 Clasificador de solicitudes")
 st.write(
     "Sistema inteligente para detectar automáticamente la intención de una solicitud "
     "de atención al cliente usando **NLP + TF-IDF + SVM calibrado**."
@@ -170,13 +499,15 @@ st.divider()
 
 st.subheader("Ingresar solicitud")
 
-solicitud = st.text_area(
-    "Escriba aquí el mensaje del cliente:",
-    placeholder="Ejemplo: Tengo un problema con el pago...",
-    height=120
-)
+with st.form("form_clasificacion", clear_on_submit=True):
+    solicitud = st.text_input(
+        "Escriba aquí el mensaje del cliente:",
+        placeholder="Ejemplo: Tengo un problema con el pago...",
+        help="Presiona Enter para clasificar y guardar la respuesta.",
+        key="solicitud_input"
+    )
 
-clasificar = st.button("Clasificar solicitud", use_container_width=True)
+    clasificar = st.form_submit_button("Clasificar y guardar", use_container_width=True)
 
 
 # ==============================
@@ -188,89 +519,27 @@ if clasificar:
         st.warning("Por favor ingrese una solicitud para clasificar.")
     else:
         texto_limpio, intent, categoria_tecnica, info, confianza, top_3 = predecir_solicitud(solicitud)
-        estado, descripcion_estado, tipo_estado = estado_confianza(confianza)
+        resultado = construir_resultado(
+            solicitud,
+            texto_limpio,
+            intent,
+            categoria_tecnica,
+            info,
+            confianza,
+            top_3,
+        )
+        guardar_resultado(resultado)
 
-        porcentaje = confianza * 100
+if st.session_state["ultima_respuesta"] is not None:
+    mostrar_resultado(st.session_state["ultima_respuesta"])
 
-        st.divider()
-        st.subheader("Resultado")
-
-        if tipo_estado == "success":
-            st.success(f"{estado} - {descripcion_estado}")
-            prioridad_mostrada = info["prioridad"]
-            area_mostrada = info["area_responsable"]
-            recomendacion_mostrada = info["recomendacion"]
-
-        elif tipo_estado == "warning":
-            st.warning(f"{estado} - {descripcion_estado}")
-            prioridad_mostrada = "Revisión manual"
-            area_mostrada = info["area_responsable"]
-            recomendacion_mostrada = (
-                "La solicitud tiene similitud con una intención entrenada, "
-                "pero la confianza no es suficientemente alta. Se recomienda "
-                "validar manualmente antes de enrutar el caso."
+    with st.expander("Respuestas guardadas", expanded=False):
+        for item in st.session_state["historial_respuestas"]:
+            st.markdown(
+                f"""**{item['timestamp']}** - {item['info']['nombre']}  
+Confianza: {item['confianza'] * 100:.1f}%  
+Solicitud: {item['solicitud']}"""
             )
-
-        else:
-            st.error(f"{estado} - {descripcion_estado}")
-            prioridad_mostrada = "Revisión manual"
-            area_mostrada = "Servicio al cliente"
-            recomendacion_mostrada = (
-                "La solicitud no coincide claramente con las intenciones entrenadas. "
-                "Se recomienda revisión manual o ampliar el dataset con ejemplos similares."
-            )
-
-        with st.container(border=True):
-
-            with st.container(border=True):
-                st.caption("ESTADO DE CLASIFICACIÓN")
-                st.write(f"**{descripcion_estado}**")
-
-            col_titulo, col_confianza = st.columns([3, 1])
-
-            with col_titulo:
-                st.markdown(f"## {info['nombre']}")
-                st.code(intent, language=None)
-
-            with col_confianza:
-                st.metric("Confianza", f"{porcentaje:.1f}%")
-
-            st.progress(confianza)
-
-            col_a, col_b = st.columns(2)
-
-            with col_a:
-                with st.container(border=True):
-                    st.caption("CATEGORÍA TÉCNICA")
-                    st.write(f"**{categoria_tecnica}**")
-
-            with col_b:
-                with st.container(border=True):
-                    st.caption("CATEGORÍA GENERAL")
-                    st.write(f"**{info['categoria_amigable']}**")
-
-            col_c, col_d = st.columns(2)
-
-            with col_c:
-                with st.container(border=True):
-                    st.caption("PRIORIDAD")
-                    st.write(f"**{prioridad_mostrada}**")
-
-            with col_d:
-                with st.container(border=True):
-                    st.caption("ÁREA RESPONSABLE")
-                    st.write(f"**{area_mostrada}**")
-
-            with st.container(border=True):
-                st.caption("TEXTO PROCESADO")
-                st.write(f"`{texto_limpio}`")
-
-            st.markdown("#### Recomendación")
-            st.info(recomendacion_mostrada)
-
-        st.divider()
-
-        mostrar_top3(top_3)
 
 
 # ==============================

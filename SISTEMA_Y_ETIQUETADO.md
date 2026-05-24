@@ -28,15 +28,7 @@ Este enfoque evita mezclar etiquetas muy parecidas y permite una respuesta más 
 - Priorizar la intención más específica disponible.
 - Cuando falten ejemplos reales, generar sintéticos para ampliar cobertura, pero sin inventar clases sin respaldo operativo.
 
-## Qué se hizo con la taxonomía
-
-- Se consolidó la dirección de envío en una única intención para evitar duplicidad.
-- Se añadieron intenciones específicas para problemas de producto y entrega.
-- Se reforzaron las clases más ambiguas con más datos sintéticos y plantillas más naturales.
-- Se separó la mala atención de la queja general para capturar mejor frases como `solicito asesor` y `recibí mala atención`.
-- El catálogo actual quedó en 39 intenciones.
-
-## Qué queda recomendado
+## Recomendaciones operativas
 
 - Mantener las intenciones actuales como base operativa.
 - Añadir nuevas etiquetas solo cuando aparezcan suficientes ejemplos reales.

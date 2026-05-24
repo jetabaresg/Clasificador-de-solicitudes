@@ -22,15 +22,6 @@ archivo_limpio = PROJECT_DIR / "data" / "dataset_bitext_final_limpio.csv"
 archivo = archivo_merged if archivo_merged.exists() else archivo_limpio
 df = pd.read_csv(archivo)
 
-print("Columnas del dataset:")
-print(df.columns)
-
-print("\nTotal de registros:", len(df))
-print("Cantidad de intenciones:", df["intent"].nunique())
-
-print("\nRegistros por intención:")
-print(df["intent"].value_counts())
-
 # ==============================
 # 2. Limpieza del texto
 # ==============================
@@ -76,9 +67,6 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=42,
     stratify=y
 )
-
-print("\nRegistros de entrenamiento:", len(X_train))
-print("Registros de prueba:", len(X_test))
 
 # ==============================
 # 5. Vectorización mejorada
@@ -133,7 +121,6 @@ modelo = Pipeline([
 # 7. Entrenar modelo
 # ==============================
 
-print("\nEntrenando modelo SVM calibrado mejorado...")
 modelo.fit(X_train, y_train)
 
 # ==============================
@@ -143,15 +130,6 @@ modelo.fit(X_train, y_train)
 y_pred = modelo.predict(X_test)
 
 accuracy = accuracy_score(y_test, y_pred)
-
-print("\nAccuracy del modelo calibrado mejorado:")
-print(round(accuracy, 4))
-
-print("\nReporte de clasificación:")
-print(classification_report(y_test, y_pred))
-
-print("\nMatriz de confusión:")
-print(confusion_matrix(y_test, y_pred))
 
 # ==============================
 # 9. Analizar confianza
@@ -163,22 +141,6 @@ confianzas = probabilidades.max(axis=1)
 y_test_array = np.array(y_test)
 correctas = y_pred == y_test_array
 
-print("\nAnálisis de confianza:")
-print("Confianza promedio general:", round(confianzas.mean(), 4))
-print("Confianza promedio en aciertos:", round(confianzas[correctas].mean(), 4))
-
-if (~correctas).sum() > 0:
-    print("Confianza promedio en errores:", round(confianzas[~correctas].mean(), 4))
-else:
-    print("No hubo errores en el conjunto de prueba.")
-
-print("\nDistribución de confianza:")
-print("Mínima:", round(confianzas.min(), 4))
-print("Percentil 25:", round(np.percentile(confianzas, 25), 4))
-print("Mediana:", round(np.percentile(confianzas, 50), 4))
-print("Percentil 75:", round(np.percentile(confianzas, 75), 4))
-print("Máxima:", round(confianzas.max(), 4))
-
 # ==============================
 # 10. Guardar modelo
 # ==============================
@@ -186,5 +148,3 @@ print("Máxima:", round(confianzas.max(), 4))
 ruta_modelo = BASE_DIR / "modelo_svm.pkl"
 
 joblib.dump(modelo, ruta_modelo)
-
-print("\nModelo guardado como:", ruta_modelo)
